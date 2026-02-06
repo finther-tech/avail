@@ -1,0 +1,25 @@
+{
+  "autoApprove": {
+    "bash": [
+      "cd *",
+      "ls *",
+      "pwd",
+      "git status",
+      "git log",
+      "git diff",
+      "cat *",
+      "echo *",
+      "mkdir *",
+      "rm -rf *",
+      "cp *",
+      "mv *"
+    ],
+    "read": true,
+    "glob": true,
+    "grep": true
+  },
+  "hooks": {
+    "preCommand": "",
+    "postCommand": ""
+  }
+}
