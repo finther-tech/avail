@@ -37,14 +37,33 @@ Domain:       Your custom domain → Vercel
 
 ### 1.2 Z.ai API Details
 
+**IMPORTANT:** If you're using the **GLM Coding Plan**, use the coding endpoint!
+
 ```
+# For GLM Coding Plan:
+Base URL:  https://api.z.ai/api/coding/paas/v4/
+
+# For General Plan (if you have regular credits):
 Base URL:  https://api.z.ai/api/paas/v4/
+
 Model:     glm-4.7 (or glm-4.6, glm-4.5)
 Headers:   Authorization: Bearer YOUR_API_KEY
 ```
 
 ### 1.3 Test Your API Key
 
+**For GLM Coding Plan:**
+```bash
+curl -X POST "https://api.z.ai/api/coding/paas/v4/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "glm-4.7",
+    "messages": [{"role": "user", "content": "Hello"}]
+  }'
+```
+
+**For General Plan:**
 ```bash
 curl -X POST "https://api.z.ai/api/paas/v4/chat/completions" \
   -H "Content-Type: application/json" \
@@ -189,10 +208,10 @@ Add these in **Environment Variables** section:
 | Name | Value | Environment |
 |------|-------|-------------|
 | `ZAI_API_KEY` | Your Z.ai API key | Production, Preview, Development |
-| `ZAI_BASE_URL` | `https://api.z.ai/api/paas/v4/` | Production, Preview, Development |
+| `ZAI_BASE_URL` | `https://api.z.ai/api/coding/paas/v4/` (Coding Plan) or `https://api.z.ai/api/paas/v4/` (General Plan) | Production, Preview, Development |
 | `ZAI_MODEL` | `glm-4.7` | Production, Preview, Development |
-| `SUPABASE_URL` | Your Supabase Project URL | Production, Preview, Development |
-| `SUPABASE_ANON_KEY` | Your Supabase anon key | Production, Preview, Development |
+| `PUBLIC_SUPABASE_URL` | Your Supabase Project URL | Production, Preview, Development |
+| `PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon key | Production, Preview, Development |
 | `DATABASE_URL` | Your Supabase connection string | Production, Preview, Development |
 
 ### 4.3 Deploy
@@ -242,14 +261,14 @@ Print and stick on room doors!
 Create `.env.local` file:
 
 ```env
-# Z.ai
+# Z.ai (use coding endpoint for Coding Plan)
 ZAI_API_KEY=your_api_key_here
-ZAI_BASE_URL=https://api.z.ai/api/paas/v4/
+ZAI_BASE_URL=https://api.z.ai/api/coding/paas/v4/
 ZAI_MODEL=glm-4.7
 
 # Supabase
-SUPABASE_URL=https://xxxxx.supabase.co
-SUPABASE_ANON_KEY=your_anon_key_here
+PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.xxxxx.supabase.co:5432/postgres
 ```
 
@@ -269,20 +288,20 @@ Add to `.gitignore`:
 
 ```typescript
 // src/routes/api/ai/parse/+server.ts
-import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import { json, type RequestHandler } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 
 export const POST: RequestHandler = async ({ request }) => {
   const { text, roomId } = await request.json();
 
-  const response = await fetch('https://api.z.ai/api/paas/v4/chat/completions', {
+  const response = await fetch(`${env.ZAI_BASE_URL}chat/completions`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${process.env.ZAI_API_KEY}`,
+      'Authorization': `Bearer ${env.ZAI_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: process.env.ZAI_MODEL || 'glm-4.7',
+      model: env.ZAI_MODEL || 'glm-4.7',
       messages: [
         {
           role: 'system',

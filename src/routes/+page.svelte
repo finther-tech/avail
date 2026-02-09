@@ -67,7 +67,7 @@
 		box-sizing: border-box;
 	}
 
-	body {
+	:global(body) {
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 		margin: 0;
 		padding: 0;

@@ -19,7 +19,7 @@
     "grep": true
   },
   "hooks": {
-    "preCommand": "",
-    "postCommand": ""
+    "preCommand": null,
+    "postCommand": null
   }
 }

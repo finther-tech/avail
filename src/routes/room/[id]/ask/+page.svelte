@@ -14,7 +14,7 @@
 		aiResponse = '';
 
 		try {
-			const response = await fetch(`/room/${data.room.id}/ask`, {
+			const response = await fetch(`/api/room/${data.room.id}/ask`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ question: userInput })

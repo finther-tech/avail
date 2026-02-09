@@ -1,3 +1,5 @@
+import { env } from '$env/dynamic/private';
+
 // Z.ai API integration
 // Base URL: https://api.z.ai/api/paas/v4/
 // Model: glm-4.7
@@ -31,9 +33,9 @@ export async function parseBookingIntent(
 	text: string,
 	roomId: string
 ): Promise<BookingIntent> {
-	const apiKey = import.meta.env.VITE_ZAI_API_KEY;
-	const baseUrl = import.meta.env.VITE_ZAI_BASE_URL || 'https://api.z.ai/api/paas/v4/';
-	const model = import.meta.env.VITE_ZAI_MODEL || 'glm-4.7';
+	const apiKey = env.ZAI_API_KEY;
+	const baseUrl = env.ZAI_BASE_URL || 'https://api.z.ai/api/paas/v4/';
+	const model = env.ZAI_MODEL || 'glm-4.7';
 
 	const currentTime = new Date().toISOString();
 
@@ -111,9 +113,9 @@ export async function explainConflict(
 		company?: string;
 	}>
 ): Promise<string> {
-	const apiKey = import.meta.env.VITE_ZAI_API_KEY;
-	const baseUrl = import.meta.env.VITE_ZAI_BASE_URL || 'https://api.z.ai/api/paas/v4/';
-	const model = import.meta.env.VITE_ZAI_MODEL || 'glm-4.7';
+	const apiKey = env.ZAI_API_KEY;
+	const baseUrl = env.ZAI_BASE_URL || 'https://api.z.ai/api/paas/v4/';
+	const model = env.ZAI_MODEL || 'glm-4.7';
 
 	const conflictsList = conflictingBookings
 		.map(b => `- "${b.title}" from ${new Date(b.start_time).toLocaleTimeString()} to ${new Date(b.end_time).toLocaleTimeString()}${b.company ? ` (${b.company})` : ''}`)
@@ -162,9 +164,9 @@ Be concise. Suggest 3 alternative time slots.`
 
 // General Q&A about availability
 export async function askAvail(question: string, roomId?: string): Promise<string> {
-	const apiKey = import.meta.env.VITE_ZAI_API_KEY;
-	const baseUrl = import.meta.env.VITE_ZAI_BASE_URL || 'https://api.z.ai/api/paas/v4/';
-	const model = import.meta.env.VITE_ZAI_MODEL || 'glm-4.7';
+	const apiKey = env.ZAI_API_KEY;
+	const baseUrl = env.ZAI_BASE_URL || 'https://api.z.ai/api/paas/v4/';
+	const model = env.ZAI_MODEL || 'glm-4.7';
 
 	const roomContext = roomId ? ` for room ${roomId}` : '';
 
@@ -183,6 +185,8 @@ Be concise and helpful. If you need actual booking data, tell the user you need 
 		}
 	];
 
+	console.log('Z.ai API call:', { baseUrl, model, hasApiKey: !!apiKey });
+
 	const response = await fetch(`${baseUrl}chat/completions`, {
 		method: 'POST',
 		headers: {
@@ -196,8 +200,12 @@ Be concise and helpful. If you need actual booking data, tell the user you need 
 		})
 	});
 
+	console.log('Z.ai response status:', response.status);
+
 	if (!response.ok) {
-		return 'Sorry, I\'m having trouble connecting right now. Please try again.';
+		const errorText = await response.text();
+		console.error('Z.ai API error:', response.status, errorText);
+		return `API error: ${response.status} - ${errorText}`;
 	}
 
 	const data: ZaiResponse = await response.json();
