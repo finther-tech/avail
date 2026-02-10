@@ -160,7 +160,7 @@
 					<p>Prefer to fill out a form?</p>
 					<a href="/room/{data.room.id}/book" class="sidebar-link">
 						Book Manually
-						<span class="link-arrow">right</span>
+						<span class="link-arrow">→</span>
 					</a>
 				</div>
 

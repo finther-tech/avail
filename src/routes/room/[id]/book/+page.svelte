@@ -1,40 +1,69 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { onMount } from 'svelte';
 	import type { ActionData, PageData } from './$types';
 	import { BRANDING, COMPANIES, ROOM_CONFIG, ASSETS } from '$lib/config/branding';
 
-	export let data: PageData;
-	export let form: ActionData;
+	interface Props {
+		data: PageData;
+		form: ActionData;
+	}
+	let { data, form }: Props = $props();
 
 	// Form state
-	let date = '';
-	let startTime = '';
-	let duration = 30;
-	let title = '';
-	let company: 'finther' | 'dgb' = 'finther';
+	let date = $state('');
+	let startTime = $state('');
+	let duration = $state(30);
+	let title = $state('');
+	let company = $state('finther');
+	let bookedBy = $state('');
 
-	// Set default date to today
-	$: {
-		if (!date) {
-			date = new Date().toISOString().split('T')[0];
-		}
-	}
+	// Duration options
+	const durations = [15, 30, 45, 60, 90, 120];
 
 	// Calculate end time display
-	$: endTime = startTime && duration
+	const endTime = $derived(startTime && duration
 		? (() => {
 				const [hours, minutes] = startTime.split(':').map(Number);
 				const end = new Date();
 				end.setHours(hours, minutes + duration);
 				return end.toTimeString().slice(0, 5);
 			})()
-		: '';
-
-	// Duration options
-	const durations = [15, 30, 45, 60, 90, 120];
+		: '');
 
 	// Form validation
-	$: isFormValid = date && startTime && title && duration;
+	const isFormValid = $derived(date && startTime && title && duration && bookedBy);
+
+	// Initialize form based on bookNow flag
+	onMount(() => {
+		const now = new Date();
+		date = now.toISOString().split('T')[0];
+
+		// If "Book Now" was clicked, pre-fill with next available slot
+		if (data.bookNow) {
+			// Round current time to next 30-min slot
+			const minutes = now.getMinutes();
+			const roundedMinutes = minutes <= 30 ? 30 : 60;
+			let nextHour = now.getHours();
+			if (roundedMinutes === 60) {
+				nextHour++;
+			}
+
+			// If room is occupied, use end time of current booking
+			if (data.currentBooking) {
+				const bookingEnd = new Date(data.currentBooking.end_time);
+				const bookingMinutes = bookingEnd.getMinutes();
+				const bookingRoundedMinutes = bookingMinutes <= 30 ? 30 : 60;
+				let bookingHour = bookingEnd.getHours();
+				if (bookingRoundedMinutes === 60) {
+					bookingHour++;
+				}
+				startTime = `${bookingHour.toString().padStart(2, '0')}:${bookingRoundedMinutes === 60 ? '00' : bookingRoundedMinutes.toString().padStart(2, '0')}`;
+			} else {
+				startTime = `${nextHour.toString().padStart(2, '0')}:${roundedMinutes === 60 ? '00' : roundedMinutes.toString().padStart(2, '0')}`;
+			}
+		}
+	});
 </script>
 
 <svelte:head>
@@ -162,6 +191,23 @@
 						</select>
 					</div>
 
+					<div class="form-field">
+						<label for="booked_by" class="field-label">
+							Your Name
+							<span class="required">*</span>
+						</label>
+						<input
+							type="text"
+							id="booked_by"
+							name="booked_by"
+							bind:value={bookedBy}
+							placeholder="Enter your name"
+							required
+							maxlength="50"
+							class="field-input"
+						/>
+					</div>
+
 					<div class="form-actions">
 						<button type="submit" class="btn btn-primary" disabled={!isFormValid}>
 							Confirm Booking
@@ -180,7 +226,7 @@
 					<a href="/room/{data.room.id}/ask" class="sidebar-link sidebar-link-with-logo">
 						<img src={ASSETS.logoSvg} alt="" class="link-logo" />
 						Use {BRANDING.APP_NAME}
-						<span class="link-arrow">right</span>
+						<span class="link-arrow">→</span>
 					</a>
 				</div>
 

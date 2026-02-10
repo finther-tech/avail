@@ -23,9 +23,15 @@ export const BRANDING = {
 
 // Company options for booking form (client companies using the system)
 export const COMPANIES = [
-	{ value: 'finther', label: 'Finther' },
-	{ value: 'dgb', label: 'DGB' }
+	{ value: 'finther', label: 'Finther', color: '#9333ea' }, // Purple
+	{ value: 'dgb', label: 'DGB', color: '#2563eb' } // Blue
 ] as const;
+
+// Company colors for badges and calendar
+export const COMPANY_COLORS = {
+	finther: '#9333ea', // Purple
+	dgb: '#2563eb' // Blue
+} as const;
 
 // Room carousel images
 // Alpha Room uses Finther images, Bravo Room uses DGB images
@@ -68,4 +74,9 @@ export const ROOM_CONFIG = {
 	floor: 'Level 5',
 	alpha: { capacity: 12 },
 	bravo: { capacity: 8 }
+} as const;
+
+// Footer credits
+export const FOOTER = {
+	builtBy: 'Finther Tecnologica Sdn Bhd'
 } as const;

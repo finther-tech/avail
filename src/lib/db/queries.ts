@@ -32,7 +32,7 @@ export async function getCurrentBooking(roomId: string): Promise<Booking | null>
 
 	const { data, error } = await supabase
 		.from('bookings')
-		.select('*')
+		.select('*, companies(name)')
 		.eq('room_id', roomId)
 		.lte('start_time', now)
 		.gt('end_time', now)
@@ -41,7 +41,13 @@ export async function getCurrentBooking(roomId: string): Promise<Booking | null>
 		.maybeSingle();
 
 	if (error) throw error;
-	return data;
+	if (!data) return null;
+
+	// Flatten company name into booking
+	return {
+		...data,
+		company_name: data.companies?.name
+	};
 }
 
 // Get next booking for a room
@@ -50,7 +56,7 @@ export async function getNextBooking(roomId: string): Promise<Booking | null> {
 
 	const { data, error } = await supabase
 		.from('bookings')
-		.select('*')
+		.select('*, companies(name)')
 		.eq('room_id', roomId)
 		.gt('start_time', now)
 		.order('start_time')
@@ -58,7 +64,13 @@ export async function getNextBooking(roomId: string): Promise<Booking | null> {
 		.maybeSingle();
 
 	if (error) throw error;
-	return data;
+	if (!data) return null;
+
+	// Flatten company name into booking
+	return {
+		...data,
+		company_name: data.companies?.name
+	};
 }
 
 // Check if room is available for a time slot
@@ -87,6 +99,7 @@ export async function createBooking(booking: {
 	title: string;
 	start_time: string;
 	end_time: string;
+	booked_by?: string;
 }): Promise<Booking> {
 	const { data, error } = await supabase
 		.from('bookings')
@@ -99,6 +112,16 @@ export async function createBooking(booking: {
 
 	if (error) throw error;
 	return data;
+}
+
+// Delete a booking
+export async function deleteBooking(bookingId: string): Promise<void> {
+	const { error } = await supabase
+		.from('bookings')
+		.delete()
+		.eq('id', bookingId);
+
+	if (error) throw error;
 }
 
 // Get bookings for a room (for a specific date range)

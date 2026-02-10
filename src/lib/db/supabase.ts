@@ -29,6 +29,8 @@ export interface Booking {
 	start_time: string;
 	end_time: string;
 	created_at: string;
+	booked_by?: string;
+	company_name?: string; // Populated when joining with companies table
 }
 
 export interface RoomWithStatus extends Room {

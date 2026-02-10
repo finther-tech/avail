@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { BRANDING, ROOM_CAROUSEL_IMAGES, ROOM_CONFIG, ASSETS } from '$lib/config/branding';
+	import { BRANDING, ROOM_CAROUSEL_IMAGES, ROOM_CONFIG, ASSETS, FOOTER, COMPANY_COLORS } from '$lib/config/branding';
 	import { onMount, onDestroy } from 'svelte';
 
 	interface Props {
@@ -20,6 +20,22 @@
 			month: 'short',
 			day: 'numeric'
 		});
+	}
+
+	function getCompanyColor(companyName: string | undefined): string {
+		if (!companyName) return 'var(--text-muted)';
+		const normalizedName = companyName.toLowerCase();
+		if (normalizedName === 'finther') return COMPANY_COLORS.finther;
+		if (normalizedName === 'dgb') return COMPANY_COLORS.dgb;
+		return 'var(--text-muted)';
+	}
+
+	function getCompanyBadgeClass(companyName: string | undefined): string {
+		if (!companyName) return 'company-badge-none';
+		const normalizedName = companyName.toLowerCase();
+		if (normalizedName === 'finther') return 'company-badge-finther';
+		if (normalizedName === 'dgb') return 'company-badge-dgb';
+		return 'company-badge-none';
 	}
 
 	function getRoomSchedule(roomId: string) {
@@ -95,8 +111,11 @@
 <div class="app-container">
 	<nav class="navbar">
 		<div class="nav-container">
-			<img src={ASSETS.logo} alt="{BRANDING.SYSTEM_NAME} logo" class="nav-logo" />
-			<span class="nav-brand">{BRANDING.SYSTEM_NAME}</span>
+			<a href="/" class="nav-brand-link">
+				<img src={ASSETS.logo} alt="{BRANDING.SYSTEM_NAME} logo" class="nav-logo" />
+				<span class="nav-brand">{BRANDING.SYSTEM_NAME}</span>
+			</a>
+			<a href="/analytics" class="nav-analytics">Analytics</a>
 		</div>
 	</nav>
 
@@ -119,7 +138,8 @@
 			<h2 class="section-title">Today's Overview</h2>
 			<div class="dashboard-grid">
 				{#each data.todaySchedules as schedule}
-					<a href="/room/{schedule.roomId}" class="dashboard-card">
+					{@const isOccupied = schedule.currentMeeting && schedule.currentMeeting.isNow}
+					<a href="/room/{schedule.roomId}" class="dashboard-card {isOccupied ? 'dashboard-card-occupied' : 'dashboard-card-available'}">
 						<div class="dashboard-card-header">
 							<h3 class="room-name">{schedule.roomName}</h3>
 							<span class="floor-badge">{ROOM_CONFIG.floor}</span>
@@ -132,6 +152,14 @@
 									<span class="status-text">Occupied until {schedule.currentMeeting.endTime}</span>
 								</div>
 								<p class="current-meeting">{schedule.currentMeeting.title}</p>
+								{#if schedule.currentMeeting.companyName}
+									<span class="company-badge {getCompanyBadgeClass(schedule.currentMeeting.companyName)}">
+										{schedule.currentMeeting.companyName}
+									</span>
+								{/if}
+								{#if schedule.currentMeeting.bookedBy}
+									<span class="booked-by">by {schedule.currentMeeting.bookedBy}</span>
+								{/if}
 							{:else}
 								<div class="status-available">
 									<span class="status-indicator available"></span>
@@ -144,6 +172,14 @@
 							<div class="next-meeting">
 								<span class="next-label">Next:</span>
 								<span class="next-info">{schedule.nextMeeting.startTime} - {schedule.nextMeeting.title}</span>
+								{#if schedule.nextMeeting.companyName}
+									<span class="company-badge-small {getCompanyBadgeClass(schedule.nextMeeting.companyName)}">
+										{schedule.nextMeeting.companyName}
+									</span>
+								{/if}
+								{#if schedule.nextMeeting.bookedBy}
+									<span class="booked-by-small">by {schedule.nextMeeting.bookedBy}</span>
+								{/if}
 							</div>
 						{/if}
 
@@ -152,6 +188,15 @@
 								<span class="summary-label">Bookings today</span>
 								<span class="summary-value">{schedule.totalToday}</span>
 							</div>
+							{#if schedule.currentMeeting?.bookingId}
+								<form method="POST" action="/cancel" class="cancel-form">
+									<input type="hidden" name="booking_id" value={schedule.currentMeeting.bookingId} />
+									<input type="hidden" name="room_id" value={schedule.roomId} />
+									<button type="submit" class="cancel-btn" onclick={(e) => { if (!confirm('Cancel this booking?')) e.preventDefault(); }}>
+										Cancel
+									</button>
+								</form>
+							{/if}
 						</div>
 
 						<div class="card-action">View Details</div>
@@ -201,18 +246,6 @@
 						</div>
 						<div class="room-details">
 							<h3 class="room-name">{room.name}</h3>
-							<div class="room-meta">
-								<div class="meta-row">
-									<span class="meta-label">Floor</span>
-									<span class="meta-value">{ROOM_CONFIG.floor}</span>
-								</div>
-								<div class="meta-row">
-									<span class="meta-label">Today</span>
-									<span class="meta-value">
-										{schedule?.totalToday || 0} bookings
-									</span>
-								</div>
-							</div>
 						</div>
 					</a>
 				{/each}
@@ -223,22 +256,28 @@
 		<section class="actions-section">
 			<h2 class="section-title">Quick Actions</h2>
 			<div class="actions-grid">
-				{#each data.rooms.slice(0, 1) as room}
-					<a href="/room/{room.id}/ask" class="action-card">
-						<img src={ASSETS.logoSvg} alt="" class="action-logo" />
+				<a href="/book" class="action-card">
+					<img src={ASSETS.logoSvg} alt="" class="action-logo" />
+					<div class="action-content">
+						<h3>
+							<img src={ASSETS.logoSvg} alt="" class="logo-inline" />
+							Book with {BRANDING.APP_NAME}
+						</h3>
+						<p>Use natural language to book quickly</p>
+					</div>
+				</a>
+				<a href="/book" class="action-card">
+					<img src={ASSETS.logoSvg} alt="" class="action-logo" />
+					<div class="action-content">
+						<h3>Manual Booking</h3>
+						<p>Select a room and fill out the form</p>
+					</div>
+				</a>
+				{#each data.rooms as room}
+					<a href="/room/{room.id}/book?now=true" class="action-card action-card-compact">
 						<div class="action-content">
-							<h3>
-								<img src={ASSETS.logoSvg} alt="" class="logo-inline" />
-								Book with {BRANDING.APP_NAME}
-							</h3>
-							<p>Use natural language to book quickly</p>
-						</div>
-					</a>
-					<a href="/room/{room.id}/book" class="action-card">
-						<img src={ASSETS.logoSvg} alt="" class="action-logo" />
-						<div class="action-content">
-							<h3>Manual Booking</h3>
-							<p>Fill out the booking form</p>
+							<h3>Book {room.name} Now</h3>
+							<p>Quick book next available slot</p>
 						</div>
 					</a>
 				{/each}
@@ -250,6 +289,7 @@
 		<div class="footer-content">
 			<span>{BRANDING.SYSTEM_NAME} v{BRANDING.VERSION}</span>
 			<span>{ROOM_CONFIG.floor}</span>
+			<span class="footer-built">Built by {FOOTER.builtBy}</span>
 		</div>
 	</footer>
 </div>
@@ -267,7 +307,14 @@
 		--border: #e2e8f0;
 		--border-dark: #cbd5e1;
 		--success: #059669;
+		--success-glow: rgba(5, 150, 105, 0.15);
+		--success-bg-glassy: rgba(5, 150, 105, 0.08);
 		--occupied: #dc2626;
+		--occupied-glow: rgba(220, 38, 38, 0.15);
+		--occupied-bg-glassy: rgba(220, 38, 38, 0.08);
+		--error: #dc2626;
+		--error-bg: #fef2f2;
+		--error-border: #fca5a5;
 		--radius: 6px;
 		--radius-lg: 8px;
 		--shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -322,6 +369,33 @@
 		font-weight: 600;
 		color: var(--text-primary);
 		letter-spacing: -0.01em;
+	}
+
+	.nav-brand-link {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		text-decoration: none;
+		transition: opacity 0.15s ease;
+	}
+
+	.nav-brand-link:hover {
+		opacity: 0.8;
+	}
+
+	.nav-analytics {
+		margin-left: auto;
+		font-size: 0.875rem;
+		color: var(--text-secondary);
+		text-decoration: none;
+		padding: 0.5rem 1rem;
+		border-radius: var(--radius);
+		transition: all 0.15s ease;
+	}
+
+	.nav-analytics:hover {
+		background: var(--bg-page);
+		color: var(--primary);
 	}
 
 	/* Main content */
@@ -410,11 +484,58 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.875rem;
+		position: relative;
+		z-index: 1;
 	}
 
 	.dashboard-card:hover {
 		border-color: var(--border-dark);
 		box-shadow: var(--shadow-lg);
+	}
+
+	/* Glassy border effects for availability status */
+	.dashboard-card-available {
+		border-color: rgba(5, 150, 105, 0.4);
+		background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 253, 244, 0.5));
+		box-shadow: 0 0 0 1px rgba(5, 150, 105, 0.1), 0 2px 8px rgba(5, 150, 105, 0.08), 0 0 20px rgba(5, 150, 105, 0.05);
+		position: relative;
+	}
+
+	.dashboard-card-available::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: var(--radius-lg);
+		background: radial-gradient(circle at top left, rgba(5, 150, 105, 0.15), transparent 60%);
+		pointer-events: none;
+		opacity: 0.6;
+	}
+
+	.dashboard-card-available:hover {
+		border-color: rgba(5, 150, 105, 0.6);
+		box-shadow: 0 0 0 1px rgba(5, 150, 105, 0.2), 0 4px 12px rgba(5, 150, 105, 0.12), 0 0 30px rgba(5, 150, 105, 0.1);
+	}
+
+	.dashboard-card-occupied {
+		border-color: rgba(220, 38, 38, 0.4);
+		background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(254, 242, 242, 0.5));
+		box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.1), 0 2px 8px rgba(220, 38, 38, 0.08), 0 0 20px rgba(220, 38, 38, 0.05);
+		position: relative;
+	}
+
+	.dashboard-card-occupied::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: var(--radius-lg);
+		background: radial-gradient(circle at top left, rgba(220, 38, 38, 0.15), transparent 60%);
+		pointer-events: none;
+		opacity: 0.6;
+	}
+
+	.dashboard-card-occupied:hover {
+		border-color: rgba(220, 38, 38, 0.6);
+		box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.2), 0 4px 12px rgba(220, 38, 38, 0.12), 0 0 30px rgba(220, 38, 38, 0.1);
 	}
 
 	.dashboard-card-header {
@@ -481,8 +602,66 @@
 	.current-meeting {
 		font-size: 0.9375rem;
 		color: var(--text-primary);
-		margin: 0;
+		margin: 0 0 0.5rem 0;
 		font-weight: 500;
+	}
+
+	/* Company badges */
+	.company-badge {
+		display: inline-block;
+		font-size: 0.75rem;
+		font-weight: 500;
+		padding: 0.25rem 0.5rem;
+		border-radius: var(--radius);
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+
+	.company-badge-finther {
+		background: #f3e8ff;
+		color: #9333ea;
+	}
+
+	.company-badge-dgb {
+		background: #dbeafe;
+		color: #2563eb;
+	}
+
+	.company-badge-small {
+		display: inline-block;
+		font-size: 0.6875rem;
+		font-weight: 500;
+		padding: 0.125rem 0.375rem;
+		border-radius: 4px;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		margin-left: auto;
+	}
+
+	.company-badge-small.company-badge-finther {
+		background: #f3e8ff;
+		color: #9333ea;
+	}
+
+	.company-badge-small.company-badge-dgb {
+		background: #dbeafe;
+		color: #2563eb;
+	}
+
+	.booked-by {
+		display: inline-block;
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		margin-left: 0.5rem;
+		font-style: italic;
+	}
+
+	.booked-by-small {
+		display: inline-block;
+		font-size: 0.6875rem;
+		color: var(--text-muted);
+		margin-left: 0.5rem;
+		font-style: italic;
 	}
 
 	.next-meeting {
@@ -533,6 +712,25 @@
 		padding: 0.5rem;
 		border-top: 1px solid var(--border);
 		margin-top: auto;
+	}
+
+	.cancel-form {
+		display: contents;
+	}
+
+	.cancel-btn {
+		font-size: 0.75rem;
+		padding: 0.25rem 0.75rem;
+		background: var(--error-bg);
+		color: var(--error);
+		border: 1px solid var(--error-border);
+		border-radius: var(--radius);
+		cursor: pointer;
+		transition: all 0.15s ease;
+	}
+
+	.cancel-btn:hover {
+		background: #fee2e2;
 	}
 
 	/* Rooms Section */
@@ -650,35 +848,15 @@
 	}
 
 	.room-details {
-		padding: 1rem;
+		padding: 0.875rem 1rem 1rem;
+		text-align: center;
 	}
 
 	.room-details .room-name {
 		font-size: 1rem;
 		font-weight: 600;
-		margin: 0 0 0.75rem 0;
+		margin: 0;
 		color: var(--text-primary);
-	}
-
-	.room-meta {
-		display: flex;
-		flex-direction: column;
-		gap: 0.375rem;
-	}
-
-	.meta-row {
-		display: flex;
-		justify-content: space-between;
-		font-size: 0.8125rem;
-	}
-
-	.meta-label {
-		color: var(--text-muted);
-	}
-
-	.meta-value {
-		color: var(--text-secondary);
-		font-weight: 500;
 	}
 
 	/* Actions Section */
@@ -741,6 +919,17 @@
 		margin: 0;
 	}
 
+	.action-card-compact {
+		flex-direction: column;
+		text-align: center;
+		padding: 1rem;
+	}
+
+	.action-card-compact h3 {
+		font-size: 0.875rem;
+		justify-content: center;
+	}
+
 	/* Footer */
 	.app-footer {
 		background: var(--bg-card);
@@ -756,6 +945,11 @@
 		justify-content: space-between;
 		font-size: 0.75rem;
 		color: var(--text-muted);
+	}
+
+	.footer-built {
+		opacity: 0.6;
+		font-style: italic;
 	}
 
 	/* Responsive */

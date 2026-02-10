@@ -27,11 +27,17 @@ export const load: PageServerLoad = async () => {
 					currentMeeting: currentBooking ? {
 						title: currentBooking.title,
 						endTime: new Date(currentBooking.end_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-						isNow: true
+						isNow: true,
+						companyName: currentBooking.company_name,
+						bookedBy: currentBooking.booked_by,
+						bookingId: currentBooking.id
 					} : null,
 					nextMeeting: nextBooking ? {
 						title: nextBooking.title,
-						startTime: new Date(nextBooking.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+						startTime: new Date(nextBooking.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+						companyName: nextBooking.company_name,
+						bookedBy: nextBooking.booked_by,
+						bookingId: nextBooking.id
 					} : null,
 					totalToday: todayCount,
 					isAvailable: !currentBooking

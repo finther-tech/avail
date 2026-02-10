@@ -1,8 +1,8 @@
 import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
-import { getRoom, checkAvailability, createBooking } from '$lib/db/queries';
+import { getRoom, checkAvailability, createBooking, getCurrentBooking } from '$lib/db/queries';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, url }) => {
 	const roomId = params.id;
 
 	// Get room info
@@ -12,8 +12,16 @@ export const load: PageServerLoad = async ({ params }) => {
 		throw new Error('Room not found');
 	}
 
+	// Check if user clicked "Book Now"
+	const bookNow = url.searchParams.get('now') === 'true';
+
+	// Get current booking to calculate next available slot
+	const currentBooking = await getCurrentBooking(roomId);
+
 	return {
-		room
+		room,
+		currentBooking,
+		bookNow
 	};
 };
 
@@ -27,9 +35,10 @@ export const actions: Actions = {
 		const duration = parseInt(data.get('duration') as string);
 		const title = data.get('title') as string;
 		const companyId = data.get('company') as string;
+		const bookedBy = data.get('booked_by') as string;
 
 		// Validate
-		if (!date || !startTime || !duration || !title || !companyId) {
+		if (!date || !startTime || !duration || !title || !companyId || !bookedBy) {
 			return fail(400, { error: 'Please fill in all fields' });
 		}
 
@@ -67,7 +76,8 @@ export const actions: Actions = {
 				company_id: companyId,
 				title,
 				start_time: startDateTime.toISOString(),
-				end_time: endDateTime.toISOString()
+				end_time: endDateTime.toISOString(),
+				booked_by: bookedBy
 			});
 
 			return { success: true };
