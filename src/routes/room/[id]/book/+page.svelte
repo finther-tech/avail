@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { ActionData, PageData } from './$types';
+	import { BRANDING, COMPANIES, ROOM_CONFIG, ASSETS } from '$lib/config/branding';
 
 	export let data: PageData;
 	export let form: ActionData;
@@ -10,7 +11,7 @@
 	let startTime = '';
 	let duration = 30;
 	let title = '';
-	let company = 'finther';
+	let company: 'finther' | 'dgb' = 'finther';
 
 	// Set default date to today
 	$: {
@@ -29,95 +30,113 @@
 			})()
 		: '';
 
-	// Companies
-	const companies = [
-		{ value: 'finther', label: 'Finther' },
-		{ value: 'divfex', label: 'Divfex' }
-	];
-
 	// Duration options
 	const durations = [15, 30, 45, 60, 90, 120];
+
+	// Form validation
+	$: isFormValid = date && startTime && title && duration;
 </script>
 
 <svelte:head>
-	<title>Book {data.room.name} - Avail</title>
+	<title>Book {data.room.name} - {BRANDING.SYSTEM_NAME}</title>
 </svelte:head>
 
-<div class="container">
-	<header>
-		<a href="/room/{data.room.id}">← Back to {data.room.name}</a>
-	</header>
+<div class="app-container">
+	<nav class="navbar">
+		<div class="nav-container">
+			<a href="/" class="nav-back">Rooms</a>
+			<span class="nav-divider">/</span>
+			<a href="/room/{data.room.id}" class="nav-link">{data.room.name}</a>
+			<span class="nav-divider">/</span>
+			<span class="nav-current">Book</span>
+		</div>
+	</nav>
 
-	<main>
-		<div class="booking-page">
+	<div class="main-wrapper">
+		<div class="page-header">
 			<h1>Book {data.room.name}</h1>
+			<p>Complete the form below to reserve this room</p>
+		</div>
 
-			{#if form?.success}
-				<div class="success-banner">
-					<p>✓ Booking created successfully!</p>
-					<a href="/room/{data.room.id}">View Room Status</a>
-				</div>
-			{/if}
+		<div class="content-layout">
+			<div class="form-section">
+				{#if form?.success}
+					<div class="alert alert-success">
+						<div class="alert-content">
+							<h3>Booking Confirmed</h3>
+							<p>Your reservation has been created successfully.</p>
+						</div>
+						<a href="/room/{data.room.id}" class="alert-action">View Room Status</a>
+					</div>
+				{/if}
 
-			{#if form?.error}
-				<div class="error-banner">
-					<p>✗ {form.error}</p>
-				</div>
-			{/if}
+				{#if form?.error}
+					<div class="alert alert-error">
+						<div class="alert-content">
+							<h3>Booking Failed</h3>
+							<p>{form.error}</p>
+						</div>
+					</div>
+				{/if}
 
-			<form method="POST" use:enhance>
-				<div class="form-group">
-					<label for="date">
-						<span class="label-text">Date</span>
-						<input
-							type="date"
-							id="date"
-							name="date"
-							bind:value={date}
-							required
-							min={new Date().toISOString().split('T')[0]}
-						/>
-					</label>
-				</div>
+				<form method="POST" use:enhance class="booking-form">
+					<div class="form-grid">
+						<div class="form-field">
+							<label for="date" class="field-label">
+								Date
+								<span class="required">*</span>
+							</label>
+							<input
+								type="date"
+								id="date"
+								name="date"
+								bind:value={date}
+								required
+								min={new Date().toISOString().split('T')[0]}
+								class="field-input"
+							/>
+						</div>
 
-				<div class="form-row">
-					<div class="form-group">
-						<label for="start_time">
-							<span class="label-text">Start Time</span>
+						<div class="form-field">
+							<label for="start_time" class="field-label">
+								Start Time
+								<span class="required">*</span>
+							</label>
 							<input
 								type="time"
 								id="start_time"
 								name="start_time"
 								bind:value={startTime}
 								required
+								class="field-input"
 							/>
-						</label>
+						</div>
 					</div>
 
-					<div class="form-group">
-						<label for="duration">
-							<span class="label-text">Duration</span>
-							<select id="duration" name="duration" bind:value={duration} required>
-								{#each durations as d}
-									<option value={d}>{d} minutes</option>
-								{/each}
-								<option value={60}>1 hour</option>
-								<option value={90}>1.5 hours</option>
-								<option value={120}>2 hours</option>
-							</select>
+					<div class="form-field">
+						<label for="duration" class="field-label">
+							Duration
+							<span class="required">*</span>
 						</label>
+						<select id="duration" name="duration" bind:value={duration} required class="field-input">
+							{#each durations as d}
+								<option value={d}>{d} minutes</option>
+							{/each}
+						</select>
 					</div>
-				</div>
 
-				{#if endTime}
-					<p class="end-time">
-						Ends at {endTime}
-					</p>
-				{/if}
+					{#if endTime}
+						<div class="end-time-display">
+							<span class="end-time-label">End time:</span>
+							<span class="end-time-value">{endTime}</span>
+						</div>
+					{/if}
 
-				<div class="form-group">
-					<label for="title">
-						<span class="label-text">Meeting Title</span>
+					<div class="form-field">
+						<label for="title" class="field-label">
+							Meeting Title
+							<span class="required">*</span>
+						</label>
 						<input
 							type="text"
 							id="title"
@@ -126,219 +145,464 @@
 							placeholder="e.g., Team Standup, Client Meeting"
 							required
 							maxlength="100"
+							class="field-input"
 						/>
-					</label>
-				</div>
+						<span class="field-hint">Maximum 100 characters</span>
+					</div>
 
-				<div class="form-group">
-					<label for="company">
-						<span class="label-text">Company</span>
-						<select id="company" name="company" bind:value={company} required>
-							{#each companies as c}
+					<div class="form-field">
+						<label for="company" class="field-label">
+							Company
+							<span class="required">*</span>
+						</label>
+						<select id="company" name="company" bind:value={company} required class="field-input">
+							{#each COMPANIES as c}
 								<option value={c.value}>{c.label}</option>
 							{/each}
 						</select>
-					</label>
+					</div>
+
+					<div class="form-actions">
+						<button type="submit" class="btn btn-primary" disabled={!isFormValid}>
+							Confirm Booking
+						</button>
+						<a href="/room/{data.room.id}" class="btn btn-secondary">
+							Cancel
+						</a>
+					</div>
+				</form>
+			</div>
+
+			<div class="sidebar">
+				<div class="sidebar-card">
+					<h3>Alternative Booking</h3>
+					<p>Use natural language to book quickly.</p>
+					<a href="/room/{data.room.id}/ask" class="sidebar-link sidebar-link-with-logo">
+						<img src={ASSETS.logoSvg} alt="" class="link-logo" />
+						Use {BRANDING.APP_NAME}
+						<span class="link-arrow">right</span>
+					</a>
 				</div>
 
-				<button type="submit" class="btn-submit" disabled={!date || !startTime || !title}>
-					Confirm Booking
-				</button>
-			</form>
-
-			<div class="ai-cta">
-				<p>Or use natural language:</p>
-				<a href="/room/{data.room.id}/ask" class="ai-link">
-					<span class="ai-icon">✨</span>
-					Try AI Assistant
-				</a>
+				<div class="sidebar-card">
+					<h3>Room Information</h3>
+					<dl class="room-info">
+						<div class="info-row">
+							<dt>Room</dt>
+							<dd>{data.room.name}</dd>
+						</div>
+						<div class="info-row">
+							<dt>Capacity</dt>
+							<dd>{data.room.id === 'alpha' ? ROOM_CONFIG.alpha.capacity : ROOM_CONFIG.bravo.capacity} persons</dd>
+						</div>
+						<div class="info-row">
+							<dt>Floor</dt>
+							<dd>{ROOM_CONFIG.floor}</dd>
+						</div>
+					</dl>
+				</div>
 			</div>
 		</div>
-	</main>
+	</div>
 </div>
 
 <style>
-	:global(*) {
+	:root {
+		--primary: #1e40af;
+		--primary-dark: #1e3a8a;
+		--secondary: #64748b;
+		--bg-page: #f8fafc;
+		--bg-card: #ffffff;
+		--text-primary: #0f172a;
+		--text-secondary: #475569;
+		--text-muted: #94a3b8;
+		--border: #e2e8f0;
+		--border-dark: #cbd5e1;
+		--success: #059669;
+		--success-bg: #f0fdf4;
+		--success-border: #86efac;
+		--error: #dc2626;
+		--error-bg: #fef2f2;
+		--error-border: #fca5a5;
+		--radius: 6px;
+		--radius-lg: 8px;
+		--shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+	}
+
+	* {
 		box-sizing: border-box;
 	}
 
 	:global(body) {
-		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+		font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 		margin: 0;
 		padding: 0;
-		background: #f8fafc;
-		color: #0f172a;
+		background: var(--bg-page);
+		color: var(--text-primary);
+		line-height: 1.5;
+		-webkit-font-smoothing: antialiased;
 	}
 
-	.container {
-		max-width: 500px;
-		margin: 0 auto;
-		padding: 2rem 1rem;
-		min-height: 100vh;
+	.app-container {
 		display: flex;
 		flex-direction: column;
+		min-height: 100vh;
 	}
 
-	header {
-		margin-bottom: 2rem;
+	/* Navigation */
+	.navbar {
+		background: var(--bg-card);
+		border-bottom: 1px solid var(--border);
+		position: sticky;
+		top: 0;
+		z-index: 10;
 	}
 
-	header a {
+	.nav-container {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 0.875rem 1.5rem;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.875rem;
+	}
+
+	.nav-back,
+	.nav-link {
+		color: var(--text-secondary);
 		text-decoration: none;
-		color: #2563eb;
+		transition: color 0.15s ease;
+	}
+
+	.nav-back:hover,
+	.nav-link:hover {
+		color: var(--primary);
+	}
+
+	.nav-divider {
+		color: var(--text-muted);
+	}
+
+	.nav-current {
+		color: var(--text-primary);
 		font-weight: 500;
 	}
 
-	.booking-page h1 {
-		font-size: 1.75rem;
-		margin: 0 0 1.5rem 0;
+	/* Main content */
+	.main-wrapper {
+		flex: 1;
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 2rem 1.5rem;
+		width: 100%;
 	}
 
-	.success-banner,
-	.error-banner {
-		padding: 1rem 1.5rem;
-		border-radius: 12px;
-		margin-bottom: 1.5rem;
+	.page-header {
+		margin-bottom: 2rem;
+	}
+
+	.page-header h1 {
+		font-size: 1.5rem;
+		font-weight: 700;
+		margin: 0 0 0.5rem 0;
+		color: var(--text-primary);
+		letter-spacing: -0.02em;
+	}
+
+	.page-header p {
+		font-size: 0.9375rem;
+		color: var(--text-secondary);
+		margin: 0;
+	}
+
+	/* Content layout */
+	.content-layout {
+		display: grid;
+		grid-template-columns: 1fr 300px;
+		gap: 1.5rem;
+		align-items: start;
+	}
+
+	/* Form section */
+	.form-section {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	/* Alerts */
+	.alert {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 1rem;
+		padding: 1rem 1.25rem;
+		border-radius: var(--radius-lg);
 	}
 
-	.success-banner {
-		background: #f0fdf4;
-		border: 1px solid #86efac;
-		color: #16a34a;
+	.alert-success {
+		background: var(--success-bg);
+		border: 1px solid var(--success-border);
 	}
 
-	.error-banner {
-		background: #fef2f2;
-		border: 1px solid #fecaca;
-		color: #dc2626;
+	.alert-error {
+		background: var(--error-bg);
+		border: 1px solid var(--error-border);
 	}
 
-	.success-banner a,
-	.error-banner a {
-		color: inherit;
-		text-decoration: underline;
+	.alert-content h3 {
+		font-size: 0.9375rem;
+		font-weight: 600;
+		margin: 0 0 0.25rem 0;
+		color: var(--text-primary);
+	}
+
+	.alert-content p {
+		font-size: 0.875rem;
+		margin: 0;
+		color: var(--text-secondary);
+	}
+
+	.alert-action {
+		font-size: 0.875rem;
 		font-weight: 500;
+		text-decoration: none;
+		color: var(--primary);
+		white-space: nowrap;
 	}
 
-	form {
-		background: white;
-		border-radius: 16px;
-		padding: 2rem;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	.alert-action:hover {
+		text-decoration: underline;
 	}
 
-	.form-group {
-		margin-bottom: 1.25rem;
+	/* Booking form */
+	.booking-form {
+		background: var(--bg-card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-lg);
+		padding: 1.5rem;
 	}
 
-	.form-row {
+	.form-grid {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: 1rem;
+		margin-bottom: 1rem;
 	}
 
-	label {
-		display: block;
-	}
-
-	.label-text {
-		display: block;
-		font-weight: 500;
-		margin-bottom: 0.5rem;
-		color: #374151;
-	}
-
-	input[type="date"],
-	input[type="time"],
-	input[type="text"],
-	select {
-		width: 100%;
-		padding: 0.75rem 1rem;
-		border: 1px solid #e2e8f0;
-		border-radius: 8px;
-		font-size: 1rem;
-		font-family: inherit;
-		transition: border-color 0.2s;
-	}
-
-	input:focus,
-	select:focus {
-		outline: none;
-		border-color: #2563eb;
-		box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-	}
-
-	.end-time {
-		color: #64748b;
-		font-size: 0.875rem;
-		margin-top: -0.5rem;
+	.form-field {
 		margin-bottom: 1.25rem;
 	}
 
-	.btn-submit {
+	.field-label {
+		display: block;
+		font-size: 0.875rem;
+		font-weight: 500;
+		margin-bottom: 0.5rem;
+		color: var(--text-primary);
+	}
+
+	.required {
+		color: var(--error);
+		margin-left: 2px;
+	}
+
+	.field-input {
 		width: 100%;
-		padding: 1rem;
-		background: #2563eb;
-		color: white;
-		border: none;
-		border-radius: 12px;
-		font-size: 1rem;
+		padding: 0.625rem 0.875rem;
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		font-size: 0.9375rem;
+		font-family: inherit;
+		transition: border-color 0.15s ease;
+		background: var(--bg-card);
+	}
+
+	.field-input:focus {
+		outline: none;
+		border-color: var(--primary);
+		box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+	}
+
+	.field-hint {
+		display: block;
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		margin-top: 0.375rem;
+	}
+
+	.end-time-display {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.75rem 1rem;
+		background: var(--bg-page);
+		border-radius: var(--radius);
+		margin-bottom: 1.25rem;
+	}
+
+	.end-time-label {
+		font-size: 0.875rem;
+		color: var(--text-secondary);
+	}
+
+	.end-time-value {
+		font-size: 0.9375rem;
 		font-weight: 600;
+		color: var(--text-primary);
+	}
+
+	/* Form actions */
+	.form-actions {
+		display: flex;
+		gap: 0.75rem;
+		margin-top: 1.5rem;
+	}
+
+	.btn {
+		padding: 0.75rem 1.5rem;
+		border-radius: var(--radius);
+		font-size: 0.9375rem;
+		font-weight: 500;
+		text-decoration: none;
+		text-align: center;
+		transition: all 0.15s ease;
 		cursor: pointer;
-		transition: all 0.2s;
+		border: 1px solid transparent;
 	}
 
-	.btn-submit:hover:not(:disabled) {
-		background: #1d4ed8;
-		transform: translateY(-1px);
+	.btn-primary {
+		background: var(--primary);
+		color: white;
+		border-color: var(--primary);
+		flex: 1;
 	}
 
-	.btn-submit:disabled {
+	.btn-primary:hover:not(:disabled) {
+		background: var(--primary-dark);
+		border-color: var(--primary-dark);
+	}
+
+	.btn-primary:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
 	}
 
-	.ai-cta {
-		margin-top: 2rem;
-		text-align: center;
-		padding: 1.5rem;
-		background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-		border-radius: 12px;
+	.btn-secondary {
+		background: var(--bg-card);
+		color: var(--text-primary);
+		border-color: var(--border);
 	}
 
-	.ai-cta p {
+	.btn-secondary:hover {
+		background: var(--bg-page);
+		border-color: var(--border-dark);
+	}
+
+	/* Sidebar */
+	.sidebar {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.sidebar-card {
+		background: var(--bg-card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-lg);
+		padding: 1.25rem;
+	}
+
+	.sidebar-card h3 {
+		font-size: 0.8125rem;
+		font-weight: 600;
+		margin: 0 0 0.5rem 0;
+		color: var(--text-secondary);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.sidebar-card > p {
+		font-size: 0.875rem;
+		color: var(--text-secondary);
 		margin: 0 0 1rem 0;
-		color: #64748b;
 	}
 
-	.ai-link {
-		display: inline-flex;
+	.sidebar-link {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.625rem 1rem;
+		background: var(--bg-page);
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: var(--text-primary);
+		text-decoration: none;
+		transition: all 0.15s ease;
+	}
+
+	.sidebar-link:hover {
+		background: var(--bg-card);
+		border-color: var(--border-dark);
+	}
+
+	.link-arrow {
+		font-size: 0.75rem;
+		color: var(--text-muted);
+	}
+
+	.sidebar-link-with-logo {
+		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 0.75rem 1.5rem;
-		background: white;
-		color: #2563eb;
-		text-decoration: none;
-		border-radius: 8px;
+	}
+
+	.link-logo {
+		width: 18px;
+		height: 18px;
+	}
+
+	/* Room info */
+	.room-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.info-row {
+		display: flex;
+		justify-content: space-between;
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--border);
+	}
+
+	.info-row:first-child {
+		border-top: none;
+		padding-top: 0;
+	}
+
+	.info-row dt {
+		font-size: 0.875rem;
+		color: var(--text-secondary);
+	}
+
+	.info-row dd {
+		font-size: 0.875rem;
 		font-weight: 500;
-		transition: all 0.2s;
+		color: var(--text-primary);
+		margin: 0;
 	}
 
-	.ai-link:hover {
-		background: #f0f9ff;
-		transform: translateY(-1px);
-	}
+	/* Responsive */
+	@media (max-width: 768px) {
+		.content-layout {
+			grid-template-columns: 1fr;
+		}
 
-	.ai-icon {
-		font-size: 1.25rem;
-	}
-
-	@media (max-width: 500px) {
-		.form-row {
+		.form-grid {
 			grid-template-columns: 1fr;
 		}
 	}

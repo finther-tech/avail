@@ -68,11 +68,13 @@ export async function checkAvailability(
 	endTime: string
 ): Promise<boolean> {
 	// Check for any overlapping bookings
+	// Overlap condition: existing booking starts before new booking ends AND ends after new booking starts
 	const { data, error } = await supabase
 		.from('bookings')
 		.select('id')
 		.eq('room_id', roomId)
-		.or(`and(start_time.lt.${endTime},end_time.gt.${startTime})`);
+		.lt('start_time', endTime)
+		.gt('end_time', startTime);
 
 	if (error) throw error;
 	return !data || data.length === 0;
@@ -156,4 +158,22 @@ export async function getAllCompanies(): Promise<Array<{ id: string; name: strin
 
 	if (error) throw error;
 	return data || [];
+}
+
+// Get today's bookings count for a room
+export async function getTodayBookingsCount(roomId: string): Promise<number> {
+	// Use UTC to avoid timezone issues
+	const now = new Date();
+	const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
+	const endOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1)).toISOString();
+
+	const { data, error } = await supabase
+		.from('bookings')
+		.select('id')
+		.eq('room_id', roomId)
+		.gte('start_time', startOfDay)
+		.lt('start_time', endOfDay);
+
+	if (error) throw error;
+	return data?.length || 0;
 }
