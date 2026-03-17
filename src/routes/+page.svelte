@@ -22,6 +22,10 @@
 		});
 	}
 
+	function formatTime(isoString: string): string {
+		return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+	}
+
 	function getCompanyColor(companyName: string | undefined): string {
 		if (!companyName) return 'var(--text-muted)';
 		const normalizedName = companyName.toLowerCase();
@@ -149,7 +153,7 @@
 							{#if schedule.currentMeeting && schedule.currentMeeting.isNow}
 								<div class="status-busy">
 									<span class="status-indicator busy"></span>
-									<span class="status-text">Occupied until {schedule.currentMeeting.endTime}</span>
+									<span class="status-text">Occupied until {formatTime(schedule.currentMeeting.endTime)}</span>
 								</div>
 								<p class="current-meeting">{schedule.currentMeeting.title}</p>
 								{#if schedule.currentMeeting.companyName}
@@ -171,7 +175,7 @@
 						{#if schedule.nextMeeting}
 							<div class="next-meeting">
 								<span class="next-label">Next:</span>
-								<span class="next-info">{schedule.nextMeeting.startTime} - {schedule.nextMeeting.title}</span>
+								<span class="next-info">{formatTime(schedule.nextMeeting.startTime)} - {schedule.nextMeeting.title}</span>
 								{#if schedule.nextMeeting.companyName}
 									<span class="company-badge-small {getCompanyBadgeClass(schedule.nextMeeting.companyName)}">
 										{schedule.nextMeeting.companyName}

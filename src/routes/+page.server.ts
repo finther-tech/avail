@@ -26,7 +26,7 @@ export const load: PageServerLoad = async () => {
 					roomName: room.name,
 					currentMeeting: currentBooking ? {
 						title: currentBooking.title,
-						endTime: new Date(currentBooking.end_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+						endTime: currentBooking.end_time, // Raw ISO string for client-side formatting
 						isNow: true,
 						companyName: currentBooking.company_name,
 						bookedBy: currentBooking.booked_by,
@@ -34,7 +34,7 @@ export const load: PageServerLoad = async () => {
 					} : null,
 					nextMeeting: nextBooking ? {
 						title: nextBooking.title,
-						startTime: new Date(nextBooking.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+						startTime: nextBooking.start_time, // Raw ISO string for client-side formatting
 						companyName: nextBooking.company_name,
 						bookedBy: nextBooking.booked_by,
 						bookingId: nextBooking.id
