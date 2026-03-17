@@ -33,18 +33,20 @@ export const load: PageServerLoad = async ({ params }) => {
 			minutesUntilFree = Math.max(0, Math.floor((endTime.getTime() - now.getTime()) / 60000));
 		}
 
-		// Get this week's bookings (Monday to Friday)
+		// Get bookings for the next 30 days for the weekly calendar
+		// We fetch a wider range and filter on client based on user's local timezone
 		const now = new Date();
-		const dayOfWeek = now.getUTCDay();
-		const startOfWeek = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)));
-		const endOfWeek = new Date(Date.UTC(startOfWeek.getUTCFullYear(), startOfWeek.getUTCMonth(), startOfWeek.getUTCDate() + 7));
+		const calendarStartDate = new Date(now);
+		calendarStartDate.setHours(0, 0, 0, 0);
+		const calendarEndDate = new Date(calendarStartDate);
+		calendarEndDate.setDate(calendarStartDate.getDate() + 30);
 
 		const { data: weekBookings } = await supabase
 			.from('bookings')
 			.select('*, companies(name)')
 			.eq('room_id', roomId)
-			.gte('start_time', startOfWeek.toISOString())
-			.lt('start_time', endOfWeek.toISOString())
+			.gte('start_time', calendarStartDate.toISOString())
+			.lt('start_time', calendarEndDate.toISOString())
 			.order('start_time');
 
 		// Get ALL upcoming bookings (starting from now)

@@ -11,12 +11,22 @@ export const load: PageServerLoad = async () => {
 		const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
 		const endOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1)).toISOString();
 
-		// Get this week's date range (Monday to Sunday)
-		const dayOfWeek = now.getUTCDay();
-		const startOfWeek = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)));
-		const endOfWeek = new Date(Date.UTC(startOfWeek.getUTCFullYear(), startOfWeek.getUTCMonth(), startOfWeek.getUTCDate() + 7));
-		const startOfWeekIso = startOfWeek.toISOString();
-		const endOfWeekIso = endOfWeek.toISOString();
+		// Get this week's date range (Monday to Sunday) for display
+		const dayOfWeek = now.getDay();
+		const startOfWeek = new Date(now);
+		startOfWeek.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+		startOfWeek.setHours(0, 0, 0, 0);
+		const endOfWeek = new Date(startOfWeek);
+		endOfWeek.setDate(startOfWeek.getDate() + 6);
+		endOfWeek.setHours(23, 59, 59, 999);
+
+		// Use a 30-day window for fetching data to handle timezone differences
+		const calendarStartDate = new Date(now);
+		calendarStartDate.setHours(0, 0, 0, 0);
+		const calendarEndDate = new Date(calendarStartDate);
+		calendarEndDate.setDate(calendarStartDate.getDate() + 30);
+		const startOfWeekIso = calendarStartDate.toISOString();
+		const endOfWeekIso = calendarEndDate.toISOString();
 
 		// Fetch analytics data for each room
 		const roomStats = await Promise.all(

@@ -54,17 +54,33 @@
 
 	$: weekDates = getWeekDates();
 
-	function getBookingForSlot(date: Date, hour: number) {
-		if (!weekBookings || weekBookings.length === 0) return null;
+	// Filter bookings to only show current week based on user's local timezone
+	$: filteredWeekBookings = weekBookings.filter((booking: any) => {
+		if (weekDates.length === 0) return false;
+		const bookingDate = new Date(booking.start_time);
+		const weekStart = new Date(weekDates[0]);
+		weekStart.setHours(0, 0, 0, 0);
+		const weekEnd = new Date(weekDates[weekDates.length - 1]);
+		weekEnd.setHours(23, 59, 59, 999);
+		return bookingDate >= weekStart && bookingDate <= weekEnd;
+	});
 
+	function getBookingForSlot(date: Date, hour: number) {
+		if (!filteredWeekBookings || filteredWeekBookings.length === 0) return null;
+
+		// Create the slot boundaries in local time
 		const slotStart = new Date(date);
 		slotStart.setHours(hour, 0, 0, 0);
 		const slotEnd = new Date(slotStart);
 		slotEnd.setHours(hour + 1, 0, 0, 0);
 
-		return weekBookings.find((booking: any) => {
+		// Find bookings that overlap with this slot
+		// booking.start_time and booking.end_time are ISO strings (UTC)
+		// When converted to Date objects, they become local time automatically
+		return filteredWeekBookings.find((booking: any) => {
 			const bookingStart = new Date(booking.start_time);
 			const bookingEnd = new Date(booking.end_time);
+			// Check if booking overlaps with the slot
 			return bookingStart < slotEnd && bookingEnd > slotStart;
 		});
 	}
