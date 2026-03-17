@@ -124,7 +124,7 @@
 			<div class="header-content">
 				<div>
 					<h1>Meeting Room Booking</h1>
-					<p>Check availabibility and reserve meeting spaces</p>
+					<p>Checkk availabibility and reserve meeting spaces</p>
 				</div>
 				<div class="date-display">
 					<span class="date-label">Today</span>
