@@ -23,7 +23,13 @@
 	}
 
 	function formatTime(isoString: string): string {
-		return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+		// Parse the ISO string to get UTC time, then add 8 hours for KL time
+		const utcDate = new Date(isoString);
+		const klHours = (utcDate.getUTCHours() + 8) % 24;
+		const minutes = utcDate.getUTCMinutes();
+		const hourStr = klHours.toString().padStart(2, '0');
+		const minuteStr = minutes.toString().padStart(2, '0');
+		return `${hourStr}:${minuteStr}`;
 	}
 
 	function getCompanyColor(companyName: string | undefined): string {

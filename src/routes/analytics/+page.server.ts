@@ -62,8 +62,10 @@ export const load: PageServerLoad = async () => {
 
 				const hourlyCounts: Record<number, number> = {};
 				todayBookings?.forEach((booking) => {
-					const hour = new Date(booking.start_time).getUTCHours();
-					hourlyCounts[hour] = (hourlyCounts[hour] || 0) + 1;
+					// Convert UTC hour to KL time (UTC+8)
+					const utcHour = new Date(booking.start_time).getUTCHours();
+					const klHour = (utcHour + 8) % 24; // Add 8 hours for KL timezone, wrap around if needed
+					hourlyCounts[klHour] = (hourlyCounts[klHour] || 0) + 1;
 				});
 
 				// Total bookings this week

@@ -43,11 +43,43 @@ export const actions: Actions = {
 		}
 
 		// Parse and validate dates
-		// Treat input as local time and convert to UTC for storage
+		// Treat input as Kuala Lumpur time (UTC+8) and convert to UTC for storage
 		const [hours, minutes] = startTime.split(':').map(Number);
-		const startDateTime = new Date(date);
-		startDateTime.setHours(hours, minutes, 0, 0);
+		const [year, month, day] = date.split('-').map(Number);
+
+		// KL is UTC+8, so we need to subtract 8 hours from the KL time to get UTC
+		let utcHours = hours - 8;
+		let utcDay = day;
+		let utcMonth = month - 1;
+		let utcYear = year;
+
+		// Handle day rollover
+		if (utcHours < 0) {
+			utcHours += 24;
+			utcDay -= 1;
+			// Handle month/year rollover if needed
+			if (utcDay < 1) {
+				utcMonth -= 1;
+				if (utcMonth < 0) {
+					utcMonth = 11;
+					utcYear -= 1;
+				}
+				// Get the last day of the previous month
+				const lastDayOfPrevMonth = new Date(Date.UTC(utcYear, utcMonth + 1, 0)).getUTCDate();
+				utcDay = lastDayOfPrevMonth;
+			}
+		}
+
+		// Create the correct UTC timestamp
+		const startDateTime = new Date(Date.UTC(utcYear, utcMonth, utcDay, utcHours, minutes, 0, 0));
 		const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
+
+		// Debug logging
+		console.log('=== TIMEZONE DEBUG ===');
+		console.log('Input (KL time):', `${date} ${startTime}`);
+		console.log('UTC Hours:', utcHours, 'UTC Day:', utcDay, 'UTC Month:', utcMonth, 'UTC Year:', utcYear);
+		console.log('Stored (UTC):', startDateTime.toISOString());
+		console.log('=====================');
 
 		if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
 			return fail(400, { error: 'Invalid date or time' });

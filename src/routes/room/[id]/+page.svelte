@@ -19,11 +19,39 @@
 	$: statusClass = isAvailable ? 'status-available' : 'status-occupied';
 
 	function formatTime(date: string | Date): string {
-		return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+		// Parse the ISO string to get UTC time, then add 8 hours for KL time
+		const utcDate = new Date(date);
+		const klHours = (utcDate.getUTCHours() + 8) % 24;
+		const minutes = utcDate.getUTCMinutes();
+		const hourStr = klHours.toString().padStart(2, '0');
+		const minuteStr = minutes.toString().padStart(2, '0');
+		return `${hourStr}:${minuteStr}`;
 	}
 
 	function formatDate(date: string | Date): string {
-		return new Date(date).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+		const utcDate = new Date(date);
+		const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+		const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+		// Add 8 hours to UTC time to get KL time, handling day rollover
+		let klDay = utcDate.getUTCDate();
+		let klMonth = utcDate.getUTCMonth();
+		let klYear = utcDate.getUTCFullYear();
+		let klHour = utcDate.getUTCHours() + 8;
+		if (klHour >= 24) {
+			klHour -= 24;
+			klDay += 1;
+			// Handle month rollover if needed (simplified for common cases)
+			const daysInMonth = new Date(Date.UTC(klYear, klMonth + 1, 0)).getUTCDate();
+			if (klDay > daysInMonth) {
+				klDay = 1;
+				klMonth += 1;
+				if (klMonth > 11) {
+					klMonth = 0;
+					klYear += 1;
+				}
+			}
+		}
+		return `${days[utcDate.getUTCDay()]}, ${months[klMonth]} ${klDay}`;
 	}
 
 	function getCompanyBadgeClass(companyName: string | undefined): string {

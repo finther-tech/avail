@@ -10,7 +10,8 @@
 	function formatWeekRange(start: string, end: string): string {
 		const startDate = new Date(start);
 		const endDate = new Date(end);
-		return `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+		const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+		return `${months[startDate.getUTCMonth()]} ${startDate.getUTCDate()} - ${months[endDate.getUTCMonth()]} ${endDate.getUTCDate()}`;
 	}
 
 	function getHourLabel(hour: number): string {
