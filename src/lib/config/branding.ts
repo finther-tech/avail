@@ -34,21 +34,19 @@ export const COMPANY_COLORS = {
 } as const;
 
 // Room carousel images
-// Alpha Room uses Finther images, Bravo Room uses DGB images
+// Alpha Room uses finther&DGB images, Bravo Room uses finther images
 export const ROOM_CAROUSEL_IMAGES = {
 	alpha: [
+		'/images/finther&DGB (1).jpeg',
+		'/images/finther&DGB (2).jpeg',
+		'/images/finther&DGB (3).jpeg',
+		'/images/finther&DGB (4).jpeg'
+	],
+	bravo: [
 		'/images/finther (1).jpeg',
 		'/images/finther (2).jpeg',
 		'/images/finther (3).jpeg',
 		'/images/finther (4).jpeg'
-	],
-	bravo: [
-		'/images/DGB (1).jpeg',
-		'/images/DGB (2).jpeg',
-		'/images/DGB (3).jpeg',
-		'/images/DGB (4).jpeg',
-		'/images/DGB (5).jpeg',
-		'/images/DGB (6).jpeg'
 	]
 } as const;
 
@@ -72,8 +70,8 @@ export const ASSETS = {
 // Room configuration
 export const ROOM_CONFIG = {
 	floor: 'Level 5',
-	alpha: { capacity: 12 },
-	bravo: { capacity: 8 }
+	alpha: { capacity: 12, location: 'FINTEC Level 5 • Main Entrance (Beside Main Door)' },
+	bravo: { capacity: 8, location: 'FINTEC Level 5 • Working Space Meeting Room' }
 } as const;
 
 // Footer credits

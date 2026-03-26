@@ -250,6 +250,7 @@
 						</div>
 						<div class="room-details">
 							<h3 class="room-name">{room.name}</h3>
+							<p class="room-location">{ROOM_CONFIG[room.id as keyof typeof ROOM_CONFIG]?.location}</p>
 						</div>
 					</a>
 				{/each}
@@ -859,8 +860,15 @@
 	.room-details .room-name {
 		font-size: 1rem;
 		font-weight: 600;
-		margin: 0;
+		margin: 0 0 0.25rem 0;
 		color: var(--text-primary);
+	}
+
+	.room-location {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		margin: 0;
+		line-height: 1.4;
 	}
 
 	/* Actions Section */
