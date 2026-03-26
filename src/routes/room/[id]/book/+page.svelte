@@ -49,9 +49,10 @@
 				nextHour++;
 			}
 
-			// If room is occupied, use end time of current booking
+			// If room is occupied, use end time of current booking (convert from UTC to local)
 			if (data.currentBooking) {
 				const bookingEnd = new Date(data.currentBooking.end_time);
+				// Get local time from UTC timestamp
 				const bookingMinutes = bookingEnd.getMinutes();
 				const bookingRoundedMinutes = bookingMinutes <= 30 ? 30 : 60;
 				let bookingHour = bookingEnd.getHours();

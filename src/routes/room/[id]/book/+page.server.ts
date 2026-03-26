@@ -43,7 +43,10 @@ export const actions: Actions = {
 		}
 
 		// Parse and validate dates
-		const startDateTime = new Date(`${date}T${startTime}`);
+		// Treat input as local time and convert to UTC for storage
+		const [hours, minutes] = startTime.split(':').map(Number);
+		const startDateTime = new Date(date);
+		startDateTime.setHours(hours, minutes, 0, 0);
 		const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
 
 		if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
