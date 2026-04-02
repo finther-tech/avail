@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
-	import { BRANDING, ASSETS, COMPANY_COLORS } from '$lib/config/branding';
+	import { BRANDING, ASSETS, COMPANY_COLORS, COMPANIES } from '$lib/config/branding';
 
-	export let data: PageData;
+	interface Props {
+		data: PageData;
+	}
+	let { data }: Props = $props();
 
 	let isLoading = true;
 	let error: string | null = null;
@@ -15,8 +18,8 @@
 	let weekBookings = data.weekBookings || [];
 	let allBookings = data.allBookings || [];
 
-	$: status = isAvailable ? 'Available' : 'Occupied';
-	$: statusClass = isAvailable ? 'status-available' : 'status-occupied';
+	let status = $derived(isAvailable ? 'Available' : 'Occupied');
+	let statusClass = $derived(isAvailable ? 'status-available' : 'status-occupied');
 
 	function formatTime(date: string | Date): string {
 		// Parse the ISO string to get UTC time, then add 8 hours for KL time
@@ -59,18 +62,26 @@
 		const normalizedName = companyName.toLowerCase();
 		if (normalizedName === 'finther') return 'company-badge-finther';
 		if (normalizedName === 'dgb') return 'company-badge-dgb';
+		if (normalizedName === 'divfex') return 'company-badge-divfex';
 		return 'company-badge-none';
+	}
+
+	function getCompanyShortName(companyName: string | undefined): string {
+		if (!companyName) return '';
+		const company = COMPANIES.find(c => c.value === companyName.toLowerCase());
+		return company?.shortName || companyName;
 	}
 
 	// Calendar helpers
 	const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 	const hours = Array.from({ length: 11 }, (_, i) => i + 8); // 8 AM to 6 PM
+	let weekOffset = $state(0);
 
 	function getWeekDates() {
 		const now = new Date();
 		const dayOfWeek = now.getDay();
 		const startOfWeek = new Date(now);
-		startOfWeek.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+		startOfWeek.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1) + (weekOffset * 7));
 		startOfWeek.setHours(0, 0, 0, 0);
 
 		return weekDays.map((_, index) => {
@@ -80,10 +91,30 @@
 		});
 	}
 
-	$: weekDates = getWeekDates();
+	function goToPrevWeek() {
+		weekOffset -= 1;
+	}
+
+	function goToNextWeek() {
+		weekOffset += 1;
+	}
+
+	function goToCurrentWeek() {
+		weekOffset = 0;
+	}
+
+	function getWeekLabel(): string {
+		if (weekOffset === 0) return 'This Week';
+		if (weekOffset === -1) return 'Last Week';
+		if (weekOffset === 1) return 'Next Week';
+		if (weekOffset < 0) return `${Math.abs(weekOffset)} Weeks Ago`;
+		return `${weekOffset} Weeks Ahead`;
+	}
+
+	let weekDates = $derived.by(() => getWeekDates());
 
 	// Filter bookings to only show current week based on user's local timezone
-	$: filteredWeekBookings = weekBookings.filter((booking: any) => {
+	let filteredWeekBookings = $derived(weekBookings.filter((booking: any) => {
 		if (weekDates.length === 0) return false;
 		const bookingDate = new Date(booking.start_time);
 		const weekStart = new Date(weekDates[0]);
@@ -91,7 +122,7 @@
 		const weekEnd = new Date(weekDates[weekDates.length - 1]);
 		weekEnd.setHours(23, 59, 59, 999);
 		return bookingDate >= weekStart && bookingDate <= weekEnd;
-	});
+	}));
 
 	function getBookingForSlot(date: Date, hour: number) {
 		if (!filteredWeekBookings || filteredWeekBookings.length === 0) return null;
@@ -120,13 +151,14 @@
 		const companyName = booking.company_name?.toLowerCase() || '';
 		if (companyName === 'finther') return 'slot-finther';
 		if (companyName === 'dgb') return 'slot-dgb';
+		if (companyName === 'divfex') return 'slot-divfex';
 		return 'slot-booked';
 	}
 
 	function getBookingTitle(date: Date, hour: number): string {
 		const booking = getBookingForSlot(date, hour);
 		if (!booking) return '';
-		return booking.title;
+		return getCompanyShortName(booking.company_name);
 	}
 
 	function formatHour(hour: number): string {
@@ -197,7 +229,7 @@
 								<p class="booking-title">{currentBooking.title}</p>
 								{#if currentBooking.company_name}
 									<span class="company-badge {getCompanyBadgeClass(currentBooking.company_name)}">
-										{currentBooking.company_name}
+										{getCompanyShortName(currentBooking.company_name)}
 									</span>
 								{/if}
 								{#if currentBooking.booked_by}
@@ -225,7 +257,20 @@
 
 					<!-- Weekly Calendar -->
 					<div class="panel-section">
-						<h2 class="section-title">This Week's Schedule</h2>
+						<div class="calendar-header-row">
+							<h2 class="section-title">{getWeekLabel()}'s Schedule</h2>
+							<div class="calendar-nav-buttons">
+								<button onclick={goToPrevWeek} class="calendar-nav-btn" type="button" title="Previous week">
+									←
+								</button>
+								<button onclick={goToCurrentWeek} class="calendar-nav-btn" type="button" title="Go to current week">
+									Today
+								</button>
+								<button onclick={goToNextWeek} class="calendar-nav-btn" type="button" title="Next week">
+									→
+								</button>
+							</div>
+						</div>
 						<div class="calendar-container">
 							<div class="calendar-header">
 								<div class="calendar-spacer"></div>
@@ -264,11 +309,15 @@
 								</span>
 								<span class="legend-item">
 									<span class="legend-box slot-finther"></span>
-									<span>Finther</span>
+									<span>FINTEC</span>
 								</span>
 								<span class="legend-item">
 									<span class="legend-box slot-dgb"></span>
 									<span>DGB</span>
+								</span>
+								<span class="legend-item">
+									<span class="legend-box slot-divfex"></span>
+									<span>Divfex</span>
 								</span>
 							</div>
 						</div>
@@ -287,7 +336,7 @@
 								<p class="booking-title">{nextBooking.title}</p>
 								{#if nextBooking.company_name}
 									<span class="company-badge {getCompanyBadgeClass(nextBooking.company_name)}">
-										{nextBooking.company_name}
+										{getCompanyShortName(nextBooking.company_name)}
 									</span>
 								{/if}
 								{#if nextBooking.booked_by}
@@ -321,7 +370,7 @@
 												<span class="booking-list-title">{booking.title}</span>
 												{#if booking.company_name}
 													<span class="company-badge-small {getCompanyBadgeClass(booking.company_name)}">
-														{booking.company_name}
+														{getCompanyShortName(booking.company_name)}
 													</span>
 												{/if}
 												{#if booking.booked_by}
@@ -552,6 +601,38 @@
 		letter-spacing: 0.05em;
 	}
 
+	/* Calendar header row */
+	.calendar-header-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1rem;
+	}
+
+	.calendar-nav-buttons {
+		display: flex;
+		gap: 0.375rem;
+	}
+
+	.calendar-nav-btn {
+		font-size: 0.75rem;
+		font-weight: 500;
+		padding: 0.375rem 0.625rem;
+		background: var(--bg-page);
+		color: var(--text-secondary);
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		cursor: pointer;
+		transition: all 0.15s ease;
+		min-width: 32px;
+	}
+
+	.calendar-nav-btn:hover {
+		background: var(--bg-card);
+		border-color: var(--border-dark);
+		color: var(--primary);
+	}
+
 	/* Booking cards */
 	.booking-card {
 		padding: 1.25rem;
@@ -721,6 +802,13 @@
 		color: #2563eb;
 	}
 
+	.company-badge-divfex {
+		background: rgba(220, 38, 38, 0.1);
+		color: #dc2626;
+		backdrop-filter: blur(4px);
+		border: 1px solid rgba(220, 38, 38, 0.2);
+	}
+
 	.company-badge-small {
 		display: inline-block;
 		font-size: 0.6875rem;
@@ -739,6 +827,13 @@
 	.company-badge-small.company-badge-dgb {
 		background: #dbeafe;
 		color: #2563eb;
+	}
+
+	.company-badge-small.company-badge-divfex {
+		background: rgba(220, 38, 38, 0.1);
+		color: #dc2626;
+		backdrop-filter: blur(4px);
+		border: 1px solid rgba(220, 38, 38, 0.2);
 	}
 
 	.booked-by {
@@ -993,6 +1088,13 @@
 		background: #dbeafe;
 		border: 1px solid #93c5fd;
 		color: #1d4ed8;
+	}
+
+	.slot-divfex {
+		background: rgba(220, 38, 38, 0.1);
+		border: 1px solid rgba(220, 38, 38, 0.3);
+		color: #dc2626;
+		backdrop-filter: blur(4px);
 	}
 
 	.slot-booked {

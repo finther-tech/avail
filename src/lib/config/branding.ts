@@ -23,24 +23,25 @@ export const BRANDING = {
 
 // Company options for booking form (client companies using the system)
 export const COMPANIES = [
-	{ value: 'finther', label: 'Finther', color: '#9333ea' }, // Purple
-	{ value: 'dgb', label: 'DGB', color: '#2563eb' } // Blue
+	{ value: 'finther', label: 'Finther Tecnologica (FINTEC)', shortName: 'FINTEC', color: '#9333ea', logo: 'fintec.png' }, // Purple
+	{ value: 'dgb', label: 'Diversified Gateway Berhad (DGB)', shortName: 'DGB', color: '#2563eb', logo: 'dgb.png' }, // Blue
+	{ value: 'divfex', label: 'Divfex Berhad (Divfex)', shortName: 'Divfex', color: '#dc2626', logo: 'divfex.png' } // Red
 ] as const;
 
 // Company colors for badges and calendar
 export const COMPANY_COLORS = {
 	finther: '#9333ea', // Purple
-	dgb: '#2563eb' // Blue
+	dgb: '#2563eb', // Blue
+	divfex: '#dc2626' // Red
 } as const;
 
 // Room carousel images
 // Alpha Room uses finther&DGB images, Bravo Room uses finther images
 export const ROOM_CAROUSEL_IMAGES = {
 	alpha: [
-		'/images/finther&DGB (1).jpeg',
-		'/images/finther&DGB (2).jpeg',
-		'/images/finther&DGB (3).jpeg',
-		'/images/finther&DGB (4).jpeg'
+		'/alpha-room/alpha-room.jpeg',
+		'/alpha-room/alpha-room-2.jpeg',
+		'/alpha-room/alpha-room-3.jpeg'
 	],
 	bravo: [
 		'/images/finther (1).jpeg',

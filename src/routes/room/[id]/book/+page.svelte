@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
 	import type { ActionData, PageData } from './$types';
-	import { BRANDING, COMPANIES, ROOM_CONFIG, ASSETS } from '$lib/config/branding';
+	import { BRANDING, COMPANIES, ROOM_CONFIG, ASSETS, COMPANY_COLORS } from '$lib/config/branding';
 
 	interface Props {
 		data: PageData;
@@ -33,6 +33,11 @@
 
 	// Form validation
 	const isFormValid = $derived(date && startTime && title && duration && bookedBy);
+
+	// Helper to extract main company name (before the parentheses)
+	function getMainCompanyName(fullLabel: string): string {
+		return fullLabel.split('(')[0].trim();
+	}
 
 	// Initialize form based on bookNow flag
 	onMount(() => {
@@ -181,15 +186,27 @@
 					</div>
 
 					<div class="form-field">
-						<label for="company" class="field-label">
-							Company
+						<label class="field-label">
+							Select Your Company
 							<span class="required">*</span>
 						</label>
-						<select id="company" name="company" bind:value={company} required class="field-input">
+						<div class="company-selection">
 							{#each COMPANIES as c}
-								<option value={c.value}>{c.label}</option>
+								<button
+									type="button"
+									class="company-card"
+									class:selected={company === c.value}
+									style="--company-color: {c.color}"
+									onclick={() => company = c.value}
+									title={c.label}
+								>
+									<div class="company-glass">
+										<img src="/company-logo/{c.logo}" alt={c.shortName} class="company-logo" />
+									</div>
+								</button>
 							{/each}
-						</select>
+						</div>
+						<input type="hidden" name="company" value={company} />
 					</div>
 
 					<div class="form-field">
@@ -477,6 +494,117 @@
 		font-size: 0.75rem;
 		color: var(--text-muted);
 		margin-top: 0.375rem;
+	}
+
+	/* Company Selection Cards with Glassmorphism */
+	.company-selection {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.75rem;
+	}
+
+	.company-card {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+		background: transparent;
+		border: none;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		font-family: inherit;
+	}
+
+	.company-card:hover {
+		transform: translateY(-2px);
+	}
+
+	.company-card:hover .company-glass {
+		background: linear-gradient(135deg,
+			rgba(255, 255, 255, 0.95),
+			color-mix(in srgb, var(--company-color) 20%, white 80%)
+		);
+		border-color: color-mix(in srgb, var(--company-color) 50%, transparent);
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+	}
+
+	.company-card.selected {
+		transform: translateY(-2px);
+	}
+
+	.company-card.selected .company-glass {
+		background: linear-gradient(135deg,
+			rgba(255, 255, 255, 0.98),
+			color-mix(in srgb, var(--company-color) 25%, white 75%)
+		);
+		border-color: var(--company-color);
+		box-shadow:
+			0 0 0 3px color-mix(in srgb, var(--company-color) 30%, transparent),
+			0 4px 20px color-mix(in srgb, var(--company-color) 25%, transparent);
+	}
+
+	.company-glass {
+		width: 100%;
+		aspect-ratio: 1;
+		max-width: 100px;
+		border-radius: 16px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: linear-gradient(135deg,
+			rgba(255, 255, 255, 0.85),
+			rgba(248, 250, 252, 0.95)
+		);
+		border: 2px solid var(--border);
+		backdrop-filter: blur(10px);
+		transition: all 0.2s ease;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.company-glass::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(135deg,
+			color-mix(in srgb, var(--company-color) 15%, transparent) 0%,
+			transparent 100%
+		);
+		opacity: 0;
+		transition: opacity 0.2s ease;
+	}
+
+	.company-card:hover .company-glass::before,
+	.company-card.selected .company-glass::before {
+		opacity: 1;
+	}
+
+	.company-logo {
+		width: 55%;
+		height: 55%;
+		object-fit: contain;
+		position: relative;
+		z-index: 1;
+		transition: transform 0.2s ease;
+	}
+
+	.company-card:hover .company-logo {
+		transform: scale(1.08);
+	}
+
+	.company-card.selected .company-logo {
+		transform: scale(1.05);
+	}
+
+	/* Responsive adjustments */
+	@media (max-width: 640px) {
+		.company-selection {
+			gap: 0.5rem;
+		}
+
+		.company-glass {
+			border-radius: 14px;
+		}
 	}
 
 	.end-time-display {

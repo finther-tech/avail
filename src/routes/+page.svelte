@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { BRANDING, ROOM_CAROUSEL_IMAGES, ROOM_CONFIG, ASSETS, FOOTER, COMPANY_COLORS } from '$lib/config/branding';
+	import { BRANDING, ROOM_CAROUSEL_IMAGES, ROOM_CONFIG, ASSETS, FOOTER, COMPANY_COLORS, COMPANIES } from '$lib/config/branding';
 	import { onMount, onDestroy } from 'svelte';
 
 	interface Props {
@@ -37,6 +37,7 @@
 		const normalizedName = companyName.toLowerCase();
 		if (normalizedName === 'finther') return COMPANY_COLORS.finther;
 		if (normalizedName === 'dgb') return COMPANY_COLORS.dgb;
+		if (normalizedName === 'divfex') return COMPANY_COLORS.divfex;
 		return 'var(--text-muted)';
 	}
 
@@ -45,7 +46,14 @@
 		const normalizedName = companyName.toLowerCase();
 		if (normalizedName === 'finther') return 'company-badge-finther';
 		if (normalizedName === 'dgb') return 'company-badge-dgb';
+		if (normalizedName === 'divfex') return 'company-badge-divfex';
 		return 'company-badge-none';
+	}
+
+	function getCompanyShortName(companyName: string | undefined): string {
+		if (!companyName) return '';
+		const company = COMPANIES.find(c => c.value === companyName.toLowerCase());
+		return company?.shortName || companyName;
 	}
 
 	function getRoomSchedule(roomId: string) {
@@ -164,7 +172,7 @@
 								<p class="current-meeting">{schedule.currentMeeting.title}</p>
 								{#if schedule.currentMeeting.companyName}
 									<span class="company-badge {getCompanyBadgeClass(schedule.currentMeeting.companyName)}">
-										{schedule.currentMeeting.companyName}
+										{getCompanyShortName(schedule.currentMeeting.companyName)}
 									</span>
 								{/if}
 								{#if schedule.currentMeeting.bookedBy}
@@ -184,7 +192,7 @@
 								<span class="next-info">{formatTime(schedule.nextMeeting.startTime)} - {schedule.nextMeeting.title}</span>
 								{#if schedule.nextMeeting.companyName}
 									<span class="company-badge-small {getCompanyBadgeClass(schedule.nextMeeting.companyName)}">
-										{schedule.nextMeeting.companyName}
+										{getCompanyShortName(schedule.nextMeeting.companyName)}
 									</span>
 								{/if}
 								{#if schedule.nextMeeting.bookedBy}
@@ -638,6 +646,13 @@
 		color: #2563eb;
 	}
 
+	.company-badge-divfex {
+		background: rgba(220, 38, 38, 0.1);
+		color: #dc2626;
+		backdrop-filter: blur(4px);
+		border: 1px solid rgba(220, 38, 38, 0.2);
+	}
+
 	.company-badge-small {
 		display: inline-block;
 		font-size: 0.6875rem;
@@ -657,6 +672,13 @@
 	.company-badge-small.company-badge-dgb {
 		background: #dbeafe;
 		color: #2563eb;
+	}
+
+	.company-badge-small.company-badge-divfex {
+		background: rgba(220, 38, 38, 0.1);
+		color: #dc2626;
+		backdrop-filter: blur(4px);
+		border: 1px solid rgba(220, 38, 38, 0.2);
 	}
 
 	.booked-by {
