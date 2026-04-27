@@ -24,7 +24,7 @@
 	<div class="main-wrapper">
 		<div class="page-header">
 			<h1>Select a Room</h1>
-			<p>Choose which room you'd like to book</p>
+			<p>Choose which room you had like to book</p>
 		</div>
 
 		<div class="room-grid">
