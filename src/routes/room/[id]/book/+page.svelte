@@ -167,6 +167,10 @@
 							{#each durations as d}
 								<option value={d}>{d} minutes</option>
 							{/each}
+							{#if duration === WHOLE_DAY_DURATION}
+								<!-- whole-day needs a matching <option> or the select fails required validation -->
+								<option value={WHOLE_DAY_DURATION}>Full day · 8:30 AM – 5:30 PM</option>
+							{/if}
 						</select>
 					</div>
 
