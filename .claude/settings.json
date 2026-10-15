@@ -17,9 +17,5 @@
     "read": true,
     "glob": true,
     "grep": true
-  },
-  "hooks": {
-    "preCommand": null,
-    "postCommand": null
   }
 }

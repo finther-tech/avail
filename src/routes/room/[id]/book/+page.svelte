@@ -21,6 +21,16 @@
 	// Duration options
 	const durations = [15, 30, 45, 60, 90, 120];
 
+	// Whole-day booking (8:30 AM – 5:30 PM)
+	const WHOLE_DAY_START = '08:30';
+	const WHOLE_DAY_DURATION = 540; // minutes (9 h)
+
+	function selectWholeDay() {
+		startTime = WHOLE_DAY_START;
+		duration = WHOLE_DAY_DURATION;
+	}
+	const isWholeDay = $derived(startTime === WHOLE_DAY_START && duration === WHOLE_DAY_DURATION);
+
 	// Calculate end time display
 	const endTime = $derived(startTime && duration
 		? (() => {
@@ -158,6 +168,29 @@
 								<option value={d}>{d} minutes</option>
 							{/each}
 						</select>
+					</div>
+
+					<div class="whole-day-section" class:active={isWholeDay}>
+						<div class="whole-day-hint">Or grab the whole day — hover to preview, click to book</div>
+						<button
+							type="button"
+							class="timeline-bar"
+							onclick={selectWholeDay}
+							aria-pressed={isWholeDay}
+							aria-label="Book the whole day, 8:30 AM to 5:30 PM"
+						>
+							<span class="timeline-edge">8am</span>
+							<span class="timeline-track">
+								<span class="timeline-fill"></span>
+								<span class="timeline-marker marker-start">8:30am</span>
+								<span class="timeline-marker marker-end">5:30pm</span>
+								<span class="timeline-sun">☀</span>
+							</span>
+							<span class="timeline-edge">6pm</span>
+						</button>
+						{#if isWholeDay}
+							<div class="whole-day-badge">☀ Full day selected — 8:30 AM → 5:30 PM</div>
+						{/if}
 					</div>
 
 					{#if endTime}
@@ -626,6 +659,126 @@
 		font-size: 0.9375rem;
 		font-weight: 600;
 		color: var(--text-primary);
+	}
+
+	/* Whole-day timeline picker */
+	.whole-day-section {
+		margin-top: 8px;
+		margin-bottom: 1.25rem;
+	}
+
+	.whole-day-hint {
+		font-size: 12px;
+		color: var(--text-muted);
+		margin-bottom: 6px;
+	}
+
+	.timeline-bar {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		width: 100%;
+		min-height: 44px;
+		padding: 8px 0;
+		background: transparent;
+		border: none;
+		cursor: pointer;
+		font-family: inherit;
+	}
+
+	.timeline-edge {
+		font-size: 11px;
+		color: var(--text-muted);
+		white-space: nowrap;
+	}
+
+	.timeline-track {
+		position: relative;
+		flex: 1;
+		height: 10px;
+		border-radius: 999px;
+		background: var(--border);
+	}
+
+	.timeline-fill {
+		position: absolute;
+		left: 5%;
+		width: 90%;
+		top: 0;
+		height: 100%;
+		border-radius: 999px;
+		background: linear-gradient(90deg, #fbbf24, #f59e0b);
+		opacity: 0.35;
+		transition: opacity 0.25s ease, box-shadow 0.25s ease;
+	}
+
+	.timeline-bar:hover .timeline-fill,
+	.whole-day-section.active .timeline-fill {
+		opacity: 1;
+		box-shadow: 0 0 14px rgba(245, 158, 11, 0.55);
+	}
+
+	.timeline-marker {
+		position: absolute;
+		top: 50%;
+		transform: translate(-50%, -50%) scale(0.85);
+		font-size: 10px;
+		font-weight: 600;
+		padding: 1px 6px;
+		border-radius: 4px;
+		background: #78350f;
+		color: #fef3c7;
+		white-space: nowrap;
+		opacity: 0;
+		transition: opacity 0.25s ease, transform 0.25s ease;
+		pointer-events: none;
+		z-index: 1;
+	}
+
+	.marker-start {
+		left: 5%;
+	}
+
+	.marker-end {
+		left: 95%;
+	}
+
+	.timeline-bar:hover .timeline-marker,
+	.whole-day-section.active .timeline-marker {
+		opacity: 1;
+		transform: translate(-50%, -50%) scale(1);
+	}
+
+	.timeline-sun {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%) scale(0.9);
+		font-size: 14px;
+		transition: transform 0.25s ease;
+		pointer-events: none;
+		z-index: 1;
+	}
+
+	.timeline-bar:hover .timeline-sun {
+		transform: translate(-50%, -50%) scale(1.25);
+	}
+
+	.whole-day-badge {
+		margin-top: 8px;
+		font-size: 13px;
+		font-weight: 600;
+		color: #92400e;
+		background: #fef3c7;
+		border: 1px solid #fcd34d;
+		border-radius: var(--radius);
+		padding: 8px 12px;
+	}
+
+	@media (max-width: 480px) {
+		.timeline-edge {
+			display: none;
+		}
 	}
 
 	/* Form actions */
